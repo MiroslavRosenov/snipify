@@ -4,6 +4,7 @@ from decouple import config
 
 class Config:
     ENVIRONMENT: str = config("ENVIRONMENT", default="local", cast=str)
+    DATABASE_URL: str = config("DATABASE_URL", cast=str)
 
     @classmethod
     def validate_environment(cls, value: str) -> None:
@@ -29,3 +30,7 @@ class Config:
 
             else:
                 log.success("Successfully validated '{}'", func.__name__)
+
+    @classmethod
+    def is_development_environment(cls) -> bool:
+        return cls.ENVIRONMENT in ("local", "dev")

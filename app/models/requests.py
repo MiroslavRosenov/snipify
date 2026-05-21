@@ -9,5 +9,4 @@ class CreateUrlRequest(BaseModel):
 
 
 class CreateUrlResponse(BaseModel):
-    status: str
-    url_path: Optional[str]
+    url_path: str
