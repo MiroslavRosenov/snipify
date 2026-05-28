@@ -1,19 +1,18 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, HttpUrl
 
 
 class CreateUrlRequest(BaseModel):
-    url: str = Field()
-    user_id: int
+    url: HttpUrl
 
 
 class CreateUrlResponse(BaseModel):
     url_path: str
 
 
-class CreateUserRequest(BaseModel):
-    username: str
+class UserAuthRequest(BaseModel):
+    email: str
     password: str
 
 

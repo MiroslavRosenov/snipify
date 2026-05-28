@@ -2,11 +2,12 @@ import datetime
 from typing import Annotated, Optional
 
 from fastapi import Depends
-from sqlalchemy import create_engine, select, insert, func
-from sqlalchemy.orm import Session, DeclarativeBase, mapped_column, Mapped
+from sqlalchemy import select, insert, func
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.config import Config
-from app.models.requests import CreateUserRequest
+from app.models.requests import UserAuthRequest
 
 
 class Base(DeclarativeBase): ...
@@ -18,6 +19,7 @@ class Url(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     origin: Mapped[str]
     alias: Mapped[str]
+    created_by: Mapped[int]
 
 
 class User(Base):
@@ -41,53 +43,71 @@ class DatabaseClient:
         if cls.instance is not None:
             return cls.instance
 
-        cls.engine = create_engine(
-            database_url, echo=Config.is_development_environment()
+        cls.engine = create_async_engine(
+            database_url,
+            echo=Config.is_development_environment(),
+            connect_args={"server_settings": {"search_path": "public"}},
         )
+
+        cls.instance = cls
         return cls
 
     @classmethod
-    def get_session(cls):
+    async def cleanup(cls) -> None:
+        if not cls.instance:
+            return
+
+        await cls.engine.dispose()
+
+    @classmethod
+    async def get_session(cls):
         instance = cls.get_instance(Config.DATABASE_URL)
-        with Session(instance.engine) as session:
-            yield session
+        async with AsyncSession(instance.engine) as session:
+            async with session.begin():
+                try:
+                    yield session
+                except Exception:
+                    await session.rollback()
+                    raise
 
     @staticmethod
-    def get_url_row(session: Session, url: str):
+    async def get_url_row(session: AsyncSession, url: str):
         statement = select(Url).where(lower(Url.origin) == lower(url))
-        result = session.execute(statement).scalar_one_or_none()
+        result = await session.execute(statement)
 
-        return result
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_url_from_alias(session: Session, alias: str):
+    async def get_url_from_alias(session: AsyncSession, alias: str):
         statement = select(Url).where(lower(Url.alias) == lower(alias))
-        result = session.execute(statement).scalar_one_or_none()
+        result = await session.execute(statement)
 
-        return result
-
-    @staticmethod
-    def insert_url(session: Session, url: str, alias: str) -> None:
-        statement = insert(Url).values(origin=url, alias=alias)
-        session.execute(statement)
-        session.commit()
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def fetch_user(session: Session, email: str) -> Optional[User]:
+    async def insert_url(
+        session: AsyncSession, url: str, alias: str, created_by: int
+    ) -> None:
+        statement = insert(Url).values(origin=url, alias=alias, created_by=created_by)
+        await session.execute(statement)
+        await session.commit()
+
+    @staticmethod
+    async def fetch_user(session: AsyncSession, email: str) -> Optional[User]:
         statement = select(User).where(lower(User.email) == lower(email))
-        result = session.execute(statement).scalar_one_or_none()
+        result = await session.execute(statement)
 
-        return result
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def insert_user(session: Session, user: CreateUserRequest) -> None:
+    async def insert_user(session: AsyncSession, user: UserAuthRequest) -> None:
         from app.api.routers.security import hash_password  # Circular import issue
 
         statement = insert(User).values(
-            email=user.username, hashed_password=hash_password(user.password)
+            email=user.email, hashed_password=hash_password(user.password)
         )
-        session.execute(statement)
-        session.commit()
+        await session.execute(statement)
+        await session.commit()
 
 
-SessionDependency = Annotated[Session, Depends(DatabaseClient.get_session)]
+SessionDependency = Annotated[AsyncSession, Depends(DatabaseClient.get_session)]

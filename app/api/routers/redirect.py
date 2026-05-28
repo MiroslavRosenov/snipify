@@ -16,8 +16,8 @@ redirect_router = APIRouter()
 
 
 @redirect_router.get("/u/{url}")
-async def get_url(url: Annotated[str, Path], session: SessionDependency):
-    if row := DatabaseClient.get_url_from_alias(session, url):
+async def get_url(url: Annotated[str, Path()], session: SessionDependency):
+    if row := await DatabaseClient.get_url_from_alias(session, url):
         return RedirectResponse(row.origin)
 
     raise HTTPException(status_code=404, detail="Redirect not found")
@@ -30,10 +30,11 @@ async def create_url(
     session: SessionDependency,
     user: UserDependency,
 ) -> CreateUrlResponse:
-    if row := DatabaseClient.get_url_row(session, request.url):
+    url = str(request.url._url)
+    if row := await DatabaseClient.get_url_row(session, url):
         return CreateUrlResponse(url_path=format_redirect_url(http_request, row.alias))
 
     alias = generate_random_id()
-    DatabaseClient.insert_url(session, request.url, alias)
+    await DatabaseClient.insert_url(session, url, alias, user.id)
 
     return CreateUrlResponse(url_path=format_redirect_url(http_request, alias))
