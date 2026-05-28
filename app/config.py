@@ -5,6 +5,8 @@ from decouple import config
 class Config:
     ENVIRONMENT: str = config("ENVIRONMENT", default="local", cast=str)
     DATABASE_URL: str = config("DATABASE_URL", cast=str)
+    SECRET_KEY: str = config("SECRET_KEY", cast=str)
+    ALGORITHM: str = config("ALGORITHM", cast=str)
 
     @classmethod
     def validate_environment(cls, value: str) -> None:

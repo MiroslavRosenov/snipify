@@ -10,3 +10,13 @@ class CreateUrlRequest(BaseModel):
 
 class CreateUrlResponse(BaseModel):
     url_path: str
+
+
+class CreateUserRequest(BaseModel):
+    username: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
