@@ -7,6 +7,7 @@ class Config:
     DATABASE_URL: str = config("DATABASE_URL", cast=str)
     SECRET_KEY: str = config("SECRET_KEY", cast=str)
     ALGORITHM: str = config("ALGORITHM", cast=str)
+    MAX_SESIONS_PER_USER: int = config("MAX_SESIONS_PER_USER", cast=int, default=3)
 
     @classmethod
     def validate_environment(cls, value: str) -> None:
