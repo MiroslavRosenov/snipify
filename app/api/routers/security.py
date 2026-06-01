@@ -87,30 +87,29 @@ def decode_jwt_token(token: str) -> Optional[Dict]:
         raise exc
 
 
-async def get_access_token(
-    request: Request,
-) -> str:  # We are going to use HTTP & Secure cookies for storing our access and refresh tokens since the applocation would use Jinja2 for frontend instead of external app
-    if not (access_token := request.cookies.get("access_token")):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-
-    return access_token
-
-
-async def get_refresh_token(request: Request) -> Optional[str]:
-    return request.cookies.get("refresh_token")
-
-
 async def get_signed_user(
     session: SessionDependency,
-    access_token: AccessTokenDependency,
-    refresh_token: RefreshTokenDependency,
+    http_request: Request,
     http_response: Response,
 ) -> Optional[User]:
+    access_token, refresh_token = (
+        http_request.cookies.get("access_token"),
+        http_request.cookies.get("refresh_token"),
+    )
+
+    if not any((access_token, refresh_token)):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
     try:
+        assert access_token is not None
         payload = decode_jwt_token(access_token)
+
         return await User.get_by_email(session, payload["sub"])
 
-    except jwt.ExpiredSignatureError:  # Here we'll do silent retry to refresh the access token with the provided refresh token and rorate the refresh
+    except (
+        jwt.ExpiredSignatureError,
+        AssertionError,
+    ):  # Here we'll do silent retry to refresh the access token with the provided refresh token and rorate the refresh
         if (
             refresh_token is not None
             and (
@@ -135,7 +134,7 @@ async def get_signed_user(
             )
             await RefreshToken.update_refresh_token(
                 session,
-                hash_value(stored_refresh_token.refresh_token),
+                stored_refresh_token.refresh_token,  # The value is already hashed in the database
                 hash_value(refresh_token),
             )
 
@@ -154,12 +153,15 @@ async def get_signed_user(
                 httponly=True,
                 secure=True,
                 samesite="lax",
-                max_age=None,  # We need to ensure that it's present to be able to tell which users are with expired JWT and without JWT at all
+                max_age=int(access_token_lifespan.total_seconds()),
             )
 
             return await User.get_by_id(session, stored_refresh_token.owner_id)
 
         else:
+            log.warning(
+                "Received unathorized request without access and refresh token!"
+            )
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     except jwt.InvalidSignatureError:
@@ -217,7 +219,7 @@ async def create_token(
         httponly=True,
         secure=True,
         samesite="lax",
-        max_age=None,  # We need to ensure that it's present to be able to tell which users are with expired JWT and without JWT at all
+        max_age=int(access_token_lifespan.total_seconds()),
     )
 
 
@@ -229,6 +231,4 @@ async def register_user(session: SessionDependency, request: UserAuthRequest) ->
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
 
-AccessTokenDependency = Annotated[str, Depends(get_access_token)]
-RefreshTokenDependency = Annotated[Optional[str], Depends(get_refresh_token)]
 UserDependency = Annotated[User, Depends(get_signed_user)]

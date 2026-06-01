@@ -128,11 +128,7 @@ class RefreshToken(Base):
     async def get(
         session: AsyncSession, refresh_token: str
     ) -> Optional["RefreshToken"]:
-        query = (
-            select(RefreshToken)
-            .join(User, RefreshToken.owner_id == User.id, full=True)
-            .where(RefreshToken.refresh_token == refresh_token)
-        )
+        query = select(RefreshToken).where(RefreshToken.refresh_token == refresh_token)
         result = await session.execute(query)
 
         return result.scalar_one_or_none()
@@ -160,7 +156,6 @@ class DatabaseClient:
 
         cls.engine = create_async_engine(
             database_url,
-            echo=Config.is_development_environment(),
             connect_args={"server_settings": {"search_path": "public"}},
         )
 
