@@ -92,6 +92,7 @@ class User(Base):
         ).values(
             email=email, hashed_password=password, active=True
         )  # The email confirmation is not implemented yet, we'll hard code this until it is
+        # TODO: Add email confirmation
         await session.execute(query)
 
 

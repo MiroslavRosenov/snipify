@@ -172,6 +172,7 @@ async def get_signed_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
 
+# TODO: Add forgotten password support
 @auth_router.post("/login", status_code=status.HTTP_204_NO_CONTENT)
 async def create_token(
     session: SessionDependency, request: UserAuthRequest, http_response: Response
