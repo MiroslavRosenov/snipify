@@ -9,7 +9,7 @@ from fastapi.exceptions import HTTPException
 
 from app.api.routers.security import UserDependency
 from app.models.database import SessionDependency, Url
-from app.models.requests import CreateUrlRequest, CreateUrlResponse
+from app.models.requests import CreateUrlRequest, CreateUrlResponse, UrlItemResponse
 from app.utils import format_redirect_url, generate_random_id
 
 redirect_router = APIRouter()
@@ -21,6 +21,23 @@ async def get_url(url: Annotated[str, Path()], session: SessionDependency):
         return RedirectResponse(row.origin)
 
     raise HTTPException(status_code=404, detail="Redirect not found")
+
+
+@redirect_router.get("/urls")
+async def get_user_urls(
+    http_request: Request,
+    user: UserDependency,
+    session: SessionDependency,
+) -> list[UrlItemResponse]:
+    urls = await Url.get_by_user_id(session, user.id)
+    return [
+        UrlItemResponse(
+            origin=url.origin,
+            alias=url.alias,
+            short_url=format_redirect_url(http_request, url.alias),
+        )
+        for url in urls
+    ]
 
 
 @redirect_router.post("/create_url")

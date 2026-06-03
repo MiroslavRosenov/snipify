@@ -37,3 +37,7 @@ class Config:
     @classmethod
     def is_development_environment(cls) -> bool:
         return cls.ENVIRONMENT in ("local", "dev")
+
+    @classmethod
+    def use_secure_cookies(cls) -> bool:
+        return not cls.is_development_environment()

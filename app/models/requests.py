@@ -9,6 +9,12 @@ class CreateUrlResponse(BaseModel):
     url_path: str
 
 
+class UrlItemResponse(BaseModel):
+    origin: str
+    alias: str
+    short_url: str
+
+
 class UserAuthRequest(BaseModel):
     email: str
     password: str

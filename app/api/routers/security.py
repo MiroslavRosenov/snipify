@@ -142,7 +142,7 @@ async def get_signed_user(
                 key="refresh_token",
                 value=refresh_token,
                 httponly=True,
-                secure=True,
+                secure=Config.use_secure_cookies(),
                 samesite="lax",
                 max_age=int(refresh_token_lifespan.total_seconds()),
             )
@@ -151,7 +151,7 @@ async def get_signed_user(
                 key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=True,
+                secure=Config.use_secure_cookies(),
                 samesite="lax",
                 max_age=int(access_token_lifespan.total_seconds()),
             )
@@ -208,7 +208,7 @@ async def create_token(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=Config.use_secure_cookies(),
         samesite="lax",
         max_age=int(refresh_token_lifespan.total_seconds()),
     )
@@ -217,10 +217,28 @@ async def create_token(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=Config.use_secure_cookies(),
         samesite="lax",
         max_age=int(access_token_lifespan.total_seconds()),
     )
+
+
+@auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    session: SessionDependency, http_request: Request, http_response: Response
+) -> None:
+    access_token, refresh_token = (
+        http_request.cookies.get("access_token"),
+        http_request.cookies.get("refresh_token"),
+    )
+
+    if not all((access_token, refresh_token)):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    await RefreshToken.delete(session, refresh_token)
+
+    http_response.delete_cookie("access_token")
+    http_response.delete_cookie("refresh_token")
 
 
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED)

@@ -54,6 +54,13 @@ class Url(Base):
 
         return result.scalar_one_or_none()
 
+    @staticmethod
+    async def get_by_user_id(session: AsyncSession, user_id: int) -> list["Url"]:
+        query = select(Url).where(Url.created_by == user_id).order_by(Url.id.desc())
+        result = await session.execute(query)
+
+        return list(result.scalars().all())
+
 
 class User(Base):
     __tablename__ = "users"
@@ -80,7 +87,11 @@ class User(Base):
 
     @staticmethod
     async def insert(session: AsyncSession, email: str, password: str) -> None:
-        query = insert(User).values(email=email, hashed_password=password)
+        query = insert(
+            User
+        ).values(
+            email=email, hashed_password=password, active=True
+        )  # The email confirmation is not implemented yet, we'll hard code this until it is
         await session.execute(query)
 
 
@@ -143,6 +154,11 @@ class RefreshToken(Base):
         )
         query = delete(RefreshToken).where(RefreshToken.id == sub_query.c.id)
 
+        await session.execute(query)
+
+    @staticmethod
+    async def delete(session: AsyncSession, refresh_token: str) -> None:
+        query = delete(RefreshToken).where(RefreshToken.refresh_token == refresh_token)
         await session.execute(query)
 
 

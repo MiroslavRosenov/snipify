@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <!-- Runs synchronously before paint to prevent theme flash -->
+    <script>
+        (function () {
+            const t = document.cookie.split('; ').find(r => r.startsWith('theme='))?.split('=')[1];
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Snipify – URL Shortener{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { DEFAULT: '#0F1923', light: '#162535' },
+                        brand: { DEFAULT: '#EF6C00', dark: '#D4600A' },
+                    }
+                }
+            }
+        }
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full flex flex-col bg-gray-50 dark:bg-gray-900 antialiased transition-colors">
+
+    <!-- Navigation -->
+    <header style="background:#0F1923">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="text-xl font-bold text-white tracking-tight">
+                Snipify<span style="color:#EF6C00">.</span>
+            </a>
+            <nav class="flex items-center gap-3">
+
+                <!-- Theme toggle -->
+                <button id="theme-toggle" aria-label="Toggle theme"
+                    class="p-2 rounded-lg border border-gray-600 hover:border-gray-300 text-gray-300 hover:text-white transition-colors">
+                    <!-- Moon: visible in light mode -->
+                    <svg id="theme-moon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <!-- Sun: visible in dark mode -->
+                    <svg id="theme-sun" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+
+                {% if user %}
+                    <span class="text-gray-400 text-sm hidden sm:inline">{{ user.email }}</span>
+                    <button id="logout-btn"
+                        class="text-sm px-4 py-2 border border-gray-600 hover:border-gray-300 text-gray-300 hover:text-white rounded-lg transition-colors">
+                        Log out
+                    </button>
+                {% else %}
+                    <a href="/login"
+                        class="text-sm text-gray-300 hover:text-white transition-colors px-3 py-2">
+                        Log in
+                    </a>
+                    <a href="/register"
+                        class="text-sm px-4 py-2 rounded-lg font-semibold text-white transition-colors"
+                        style="background:#EF6C00" onmouseover="this.style.background='#D4600A'" onmouseout="this.style.background='#EF6C00'">
+                        Sign up free
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer style="background:#0F1923" class="text-gray-500 text-center text-sm py-6">
+        &copy; 2026 Snipify. All rights reserved.
+    </footer>
+
+    <script>
+        // ── Theme ──────────────────────────────────────────────────────────────
+        function syncThemeIcons() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('theme-moon')?.classList.toggle('hidden', isDark);
+            document.getElementById('theme-sun')?.classList.toggle('hidden', !isDark);
+        }
+
+        document.getElementById('theme-toggle')?.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.cookie = `theme=${isDark ? 'dark' : 'light'};path=/;max-age=31536000;samesite=lax`;
+            syncThemeIcons();
+        });
+
+        // Keep in sync when OS preference changes and no cookie is saved
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const saved = document.cookie.split('; ').find(r => r.startsWith('theme='))?.split('=')[1];
+            if (!saved) {
+                document.documentElement.classList.toggle('dark', e.matches);
+                syncThemeIcons();
+            }
+        });
+
+        syncThemeIcons();
+
+        // ── Logout ─────────────────────────────────────────────────────────────
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
+            await fetch('/authentication/logout', { method: 'POST' });
+            window.location.href = '/';
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

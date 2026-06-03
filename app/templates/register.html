@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Create account – Snipify{% endblock %}
+
+{% block content %}
+<div class="min-h-full flex items-center justify-center py-16 px-4">
+    <div class="w-full max-w-md">
+
+        <!-- Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Create your account</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-8">Start shortening links in seconds — it's free.</p>
+
+            <!-- Error banner -->
+            <div id="error-banner"
+                class="hidden mb-5 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 text-sm">
+            </div>
+
+            <form id="register-form" novalidate>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5" for="email">
+                        Email address
+                    </label>
+                    <input
+                        id="email" name="email" type="email" autocomplete="email" required
+                        placeholder="you@example.com"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                               placeholder-gray-400 dark:placeholder-gray-500
+                               focus:outline-none focus:ring-2 focus:border-transparent text-sm transition-colors"
+                    />
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5" for="password">
+                        Password
+                    </label>
+                    <input
+                        id="password" name="password" type="password" autocomplete="new-password" required
+                        placeholder="••••••••"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                               placeholder-gray-400 dark:placeholder-gray-500
+                               focus:outline-none focus:ring-2 focus:border-transparent text-sm transition-colors"
+                    />
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5" for="confirm-password">
+                        Confirm password
+                    </label>
+                    <input
+                        id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" required
+                        placeholder="••••••••"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                               placeholder-gray-400 dark:placeholder-gray-500
+                               focus:outline-none focus:ring-2 focus:border-transparent text-sm transition-colors"
+                    />
+                </div>
+
+                <button
+                    type="submit" id="submit-btn"
+                    class="w-full py-3 rounded-lg font-semibold text-white text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    style="background:#EF6C00">
+                    Create account
+                </button>
+            </form>
+
+            <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                Already have an account?
+                <a href="/login" class="font-medium" style="color:#EF6C00">Log in</a>
+            </p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const form = document.getElementById('register-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorBanner = document.getElementById('error-banner');
+
+    function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.classList.remove('hidden');
+    }
+
+    function hideError() {
+        errorBanner.classList.add('hidden');
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm-password').value;
+
+        if (!email || !password || !confirm) {
+            showError('Please fill in all fields.');
+            return;
+        }
+
+        if (password !== confirm) {
+            showError('Passwords do not match.');
+            return;
+        }
+
+        if (password.length < 8) {
+            showError('Password must be at least 8 characters.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account…';
+
+        try {
+            const res = await fetch('/authentication/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (res.status === 201) {
+                window.location.href = '/login?registered=1';
+                return;
+            }
+
+            const data = await res.json().catch(() => ({}));
+            if (res.status === 409) {
+                showError('An account with that email already exists.');
+            } else {
+                showError(data.detail || 'Something went wrong. Please try again.');
+            }
+        } catch {
+            showError('Network error. Please check your connection and try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create account';
+        }
+    });
+</script>
+{% endblock %}
