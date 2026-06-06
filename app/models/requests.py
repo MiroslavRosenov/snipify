@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, EmailStr
 
 
 class CreateUrlRequest(BaseModel):
@@ -15,8 +15,15 @@ class UrlItemResponse(BaseModel):
     short_url: str
 
 
+class PaginatedUrlsResponse(BaseModel):
+    items: list[UrlItemResponse]
+    total: int
+    page: int
+    pages: int
+
+
 class UserAuthRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
@@ -27,3 +34,17 @@ class Token(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str

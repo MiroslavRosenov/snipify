@@ -1,13 +1,24 @@
+from typing import Optional
+
 from loguru import logger as log
 from decouple import config
 
 
 class Config:
-    ENVIRONMENT: str = config("ENVIRONMENT", default="local", cast=str)
-    DATABASE_URL: str = config("DATABASE_URL", cast=str)
-    SECRET_KEY: str = config("SECRET_KEY", cast=str)
-    ALGORITHM: str = config("ALGORITHM", cast=str)
+    ENVIRONMENT: str = config("ENVIRONMENT", default="local")
+    DATABASE_URL: str = config("DATABASE_URL")
+
+    SECRET_KEY: str = config("SECRET_KEY")
+    ALGORITHM: str = config("ALGORITHM")
     MAX_SESIONS_PER_USER: int = config("MAX_SESIONS_PER_USER", cast=int, default=3)
+
+    SMTP_SERVER: Optional[str] = config("SMTP_SERVER", default=None)
+    SMTP_PORT: int = config("SMTP_PORT", cast=int, default=587)
+    SMTP_LOGIN: Optional[str] = config("SMTP_LOGIN", default=None)
+    SMTP_PASSWORD: Optional[str] = config("SMTP_PASSWORD", default=None)
+    SMTP_USE_SSL: bool = config("SMTP_USE_SSL", cast=bool, default=False)
+    SMTP_FROM_NAME: str = config("SMTP_FROM_NAME", default=None)
+    SMTP_FROM_EMAIL: str = config("SMTP_FROM_EMAIL", default=None)
 
     @classmethod
     def validate_environment(cls, value: str) -> None:
@@ -41,3 +52,15 @@ class Config:
     @classmethod
     def use_secure_cookies(cls) -> bool:
         return not cls.is_development_environment()
+
+    @classmethod
+    def smtp_configured(cls) -> bool:
+        return all(
+            (
+                cls.SMTP_SERVER,
+                cls.SMTP_LOGIN,
+                cls.SMTP_PASSWORD,
+                cls.SMTP_FROM_NAME,
+                cls.SMTP_FROM_EMAIL,
+            )
+        )

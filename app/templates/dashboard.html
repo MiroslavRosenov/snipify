@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard – Snipify{% endblock %}
+
+{% block content %}
+
+<!-- Links table -->
+<section class="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 py-10 transition-colors">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-gray-900 dark:text-gray-100 text-lg font-semibold">Your links</h2>
+            <span id="links-meta" class="text-sm text-gray-400 dark:text-gray-500"></span>
+        </div>
+        <div id="pagination" class="hidden mb-6 flex items-center justify-center gap-1.5"></div>
+        <div id="links-container">
+            <div class="text-center py-16 text-gray-400 dark:text-gray-500">
+                <svg class="mx-auto mb-3 w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.1m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <p class="text-sm">Loading your links…</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ── State ──────────────────────────────────────────────────────────────────
+    let currentPage = 1;
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function escHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    async function copyText(text, btn, label = 'Copy') {
+        try {
+            await navigator.clipboard.writeText(text);
+            btn.textContent = 'Copied!';
+            btn.style.color = '#16a34a';
+            setTimeout(() => { btn.textContent = label; btn.style.color = ''; }, 1800);
+        } catch {
+            btn.textContent = 'Failed';
+            setTimeout(() => { btn.textContent = label; }, 1800);
+        }
+    }
+
+    // ── Load & render links ───────────────────────────────────────────────────
+    async function loadLinks(page = 1) {
+        try {
+            const res = await fetch(`/urls?page=${page}`);
+            if (res.status === 401) { window.location.href = '/login'; return; }
+            if (!res.ok) return;
+            const data = await res.json();
+            currentPage = data.page;
+            renderLinks(data);
+            renderPagination(data.page, data.pages);
+        } catch { /* silently ignore network errors */ }
+    }
+
+    function renderLinks(data) {
+        const container = document.getElementById('links-container');
+        const meta = document.getElementById('links-meta');
+        if (meta) {
+            meta.textContent = data.total ? `${data.total} link${data.total === 1 ? '' : 's'}` : '';
+        }
+
+        if (!data.items.length) {
+            container.innerHTML = `
+                <div class="text-center py-16 text-gray-400 dark:text-gray-500">
+                    <svg class="mx-auto mb-3 w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.1m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <p class="text-sm">No links yet. <a href="/" style="color:#EF6C00" class="hover:underline">Shorten your first URL</a>.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
+                        <tr>
+                            <th class="px-6 py-3 font-medium">Original URL</th>
+                            <th class="px-6 py-3 font-medium">Short URL</th>
+                            <th class="px-6 py-3 font-medium w-24"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                        ${data.items.map(u => `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <td class="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs">
+                                <span class="block truncate" title="${escHtml(u.origin)}">${escHtml(u.origin)}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <a href="${escHtml(u.short_url)}" target="_blank"
+                                    class="font-medium hover:underline" style="color:#EF6C00">
+                                    ${escHtml(u.short_url)}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4">
+                                <button
+                                    onclick="copyText('${escHtml(u.short_url)}', this)"
+                                    class="text-xs px-3 py-1.5 border border-gray-200 dark:border-gray-600 hover:border-gray-400 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-md transition-colors">
+                                    Copy
+                                </button>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+    }
+
+    // ── Pagination ─────────────────────────────────────────────────────────────
+    function renderPagination(page, pages) {
+        const el = document.getElementById('pagination');
+        if (pages <= 1) { el.classList.add('hidden'); return; }
+        el.classList.remove('hidden');
+
+        const base = 'min-w-[2.25rem] h-9 px-3 text-sm rounded-lg border transition-colors';
+        const normal = `${base} border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500`;
+        const active = `${base} text-white font-semibold`;
+        const disabled = `${base} border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed`;
+
+        function pageBtn(p) {
+            const isActive = p === page;
+            return `<button onclick="goToPage(${p})" class="${isActive ? active : normal}"
+                ${isActive ? 'style="background:#EF6C00;border-color:#EF6C00"' : ''}>${p}</button>`;
+        }
+
+        const ellipsis = '<span class="px-1 text-gray-400 dark:text-gray-500 self-center">…</span>';
+        const parts = [];
+
+        parts.push(`<button onclick="goToPage(${page - 1})" ${page === 1 ? 'disabled' : ''}
+            class="${page === 1 ? disabled : normal}">←</button>`);
+
+        const lo = Math.max(1, page - 1);
+        const hi = Math.min(pages, page + 1);
+
+        if (lo > 1) { parts.push(pageBtn(1)); if (lo > 2) parts.push(ellipsis); }
+        for (let p = lo; p <= hi; p++) parts.push(pageBtn(p));
+        if (hi < pages) { if (hi < pages - 1) parts.push(ellipsis); parts.push(pageBtn(pages)); }
+
+        parts.push(`<button onclick="goToPage(${page + 1})" ${page === pages ? 'disabled' : ''}
+            class="${page === pages ? disabled : normal}">→</button>`);
+
+        el.innerHTML = parts.join('');
+    }
+
+    function goToPage(p) {
+        loadLinks(p);
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────────
+    loadLinks(1);
+</script>
+{% endblock %}

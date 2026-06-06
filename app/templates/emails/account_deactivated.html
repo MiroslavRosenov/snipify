@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Your Snipify account has been deactivated</title>
+    <!--[if mso]>
+    <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+    <![endif]-->
+    <style>
+        /* Reset */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+        /* Responsive */
+        @media only screen and (max-width: 620px) {
+            .email-container { width: 100% !important; }
+            .content-cell { padding: 28px 24px !important; }
+            .header-cell { padding: 24px !important; }
+            .footer-cell { padding: 20px 24px !important; }
+            .btn { display: block !important; text-align: center !important; }
+        }
+    </style>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+
+    <!-- Preview text (hidden, shown in inbox before subject) -->
+    <div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#f3f4f6;">
+        We're sorry to see you go. Your Snipify account has been deactivated.&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;
+    </div>
+
+    <!-- Outer wrapper -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+        style="background-color:#f3f4f6;">
+        <tr>
+            <td align="center" style="padding:40px 20px;">
+
+                <!-- Email card -->
+                <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0"
+                    role="presentation" style="max-width:600px;width:100%;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td class="header-cell" align="left"
+                            style="background-color:#0F1923;border-radius:12px 12px 0 0;padding:32px 40px;">
+                            <a href="{{ base_url }}" style="text-decoration:none;display:inline-block;">
+                                <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;font-family:Arial,Helvetica,sans-serif;">
+                                    Snipify<span style="color:#EF6C00;">.</span>
+                                </span>
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td class="content-cell"
+                            style="background-color:#ffffff;padding:40px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
+
+                            <!-- Icon -->
+                            <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:28px;">
+                                <tr>
+                                    <td style="width:48px;height:48px;background-color:#fff7ed;border-radius:12px;text-align:center;vertical-align:middle;">
+                                        <span style="font-size:24px;line-height:48px;">👋</span>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <h1 style="margin:0 0 12px 0;font-size:22px;font-weight:700;color:#111827;line-height:1.3;font-family:Arial,Helvetica,sans-serif;">
+                                We're sorry to see you go
+                            </h1>
+                            <p style="margin:0 0 24px 0;font-size:15px;color:#6b7280;line-height:1.6;font-family:Arial,Helvetica,sans-serif;">
+                                Your Snipify account{% if user_email %} for <strong style="color:#374151;">{{ user_email }}</strong>{% endif %}
+                                has been deactivated and all of your active sessions have been signed out.
+                                Thank you for having been part of Snipify.
+                            </p>
+
+                            <p style="margin:0 0 24px 0;font-size:15px;color:#6b7280;line-height:1.6;font-family:Arial,Helvetica,sans-serif;">
+                                Please note this is permanent — deactivated accounts cannot be restored, and you
+                                will no longer be able to sign in. Your existing short links will continue to work.
+                            </p>
+
+                            <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 24px 0;" />
+
+                            <!-- Security note -->
+                            <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;font-family:Arial,Helvetica,sans-serif;">
+                                If you didn't request this, please
+                                <!-- TODO: Create contact form -->
+                                <a href="{{ base_url }}" style="color:#EF6C00;text-decoration:underline;">contact us</a>
+                                right away — someone may have had access to your account.
+                            </p>
+
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td class="footer-cell" align="center"
+                            style="background-color:#f9fafb;border-radius:0 0 12px 12px;border:1px solid #e5e7eb;border-top:none;padding:24px 40px;">
+                            <p style="margin:0 0 8px 0;font-size:12px;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;">
+                                &copy; 2026 Snipify. All rights reserved.
+                            </p>
+                            <p style="margin:0;font-size:12px;color:#d1d5db;font-family:Arial,Helvetica,sans-serif;">
+                                You received this email because your Snipify account was deactivated.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+                <!-- / Email card -->
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

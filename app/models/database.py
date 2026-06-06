@@ -1,6 +1,8 @@
 import datetime
+import enum
 
 from typing import Annotated, Optional
+from loguru import logger as log
 
 from fastapi import Depends
 from sqlalchemy import (
@@ -9,6 +11,7 @@ from sqlalchemy import (
     insert,
     update,
     delete,
+    Enum,
     Integer,
     Text,
     Boolean,
@@ -55,11 +58,26 @@ class Url(Base):
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_by_user_id(session: AsyncSession, user_id: int) -> list["Url"]:
-        query = select(Url).where(Url.created_by == user_id).order_by(Url.id.desc())
+    async def get_by_user_id(
+        session: AsyncSession, user_id: int, offset: int = 0, limit: int = 10
+    ) -> list["Url"]:
+        query = (
+            select(Url)
+            .where(Url.created_by == user_id)
+            .order_by(Url.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
         result = await session.execute(query)
 
         return list(result.scalars().all())
+
+    @staticmethod
+    async def count_by_user_id(session: AsyncSession, user_id: int) -> int:
+        query = select(func.count(Url.id)).where(Url.created_by == user_id)
+        result = await session.execute(query)
+
+        return result.scalar_one()
 
 
 class User(Base):
@@ -69,7 +87,10 @@ class User(Base):
     email: Mapped[str] = mapped_column(Text, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(Boolean)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
 
     @staticmethod
     async def get_by_email(session: AsyncSession, email: str) -> Optional["User"]:
@@ -87,12 +108,37 @@ class User(Base):
 
     @staticmethod
     async def insert(session: AsyncSession, email: str, password: str) -> None:
-        query = insert(
-            User
-        ).values(
-            email=email, hashed_password=password, active=True
-        )  # The email confirmation is not implemented yet, we'll hard code this until it is
-        # TODO: Add email confirmation
+        query = insert(User).values(email=email, hashed_password=password)
+        await session.execute(query)
+
+    @staticmethod
+    async def update_password_by_id(
+        session: AsyncSession, user_id: int, password_hash: str
+    ) -> None:
+        query = (
+            update(User).values(hashed_password=password_hash).where(User.id == user_id)
+        )
+        await session.execute(query)
+
+    @staticmethod
+    async def update_password_by_email(
+        session: AsyncSession, email: str, password_hash: str
+    ) -> None:
+        query = (
+            update(User)
+            .values(hashed_password=password_hash)
+            .where(User.email == email)
+        )
+        await session.execute(query)
+
+    @staticmethod
+    async def activate_by_id(session: AsyncSession, user_id: int) -> None:
+        query = update(User).values(active=True).where(User.id == user_id)
+        await session.execute(query)
+
+    @staticmethod
+    async def deactivate_by_id(session: AsyncSession, user_id: int) -> None:
+        query = update(User).values(active=False).where(User.id == user_id)
         await session.execute(query)
 
 
@@ -102,8 +148,14 @@ class RefreshToken(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     owner_id: Mapped[int] = mapped_column(Integer, index=True)
     refresh_token: Mapped[str] = mapped_column(Text, unique=True, index=True)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
-    expires_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
+    expires_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
 
     @staticmethod
     async def insert(
@@ -162,6 +214,102 @@ class RefreshToken(Base):
         query = delete(RefreshToken).where(RefreshToken.refresh_token == refresh_token)
         await session.execute(query)
 
+    @staticmethod
+    async def delete_all_for_user(session: AsyncSession, owner_id: int) -> None:
+        query = delete(RefreshToken).where(RefreshToken.owner_id == owner_id)
+        await session.execute(query)
+
+
+class OneTimeTokenPurpose(enum.Enum):
+    password_reset = "password_reset"
+    account_activation = "account_activation"
+
+
+_purpose_enum = Enum(
+    OneTimeTokenPurpose,
+    name="one_time_token_purpose",
+    schema="public",
+    create_type=False,
+)
+
+
+class OneTimeToken(Base):
+    __tablename__ = "one_time_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(Integer, index=True)
+    token_hash: Mapped[str] = mapped_column(Text, unique=True, index=True)
+    purpose: Mapped[OneTimeTokenPurpose] = mapped_column(_purpose_enum)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
+    expires_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
+
+    @staticmethod
+    async def insert(
+        session: AsyncSession,
+        owner_id: int,
+        token_hash: str,
+        purpose: OneTimeTokenPurpose,
+        expires_at: datetime.datetime,
+    ) -> None:
+        query = insert(OneTimeToken).values(
+            owner_id=owner_id,
+            token_hash=token_hash,
+            purpose=purpose.value,
+            expires_at=expires_at,
+        )
+        await session.execute(query)
+
+    @staticmethod
+    async def get_by_hash(
+        session: AsyncSession, token_hash: str
+    ) -> Optional["OneTimeToken"]:
+        query = select(OneTimeToken).where(OneTimeToken.token_hash == token_hash)
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_latest_for_user(
+        session: AsyncSession, owner_id: int, purpose: OneTimeTokenPurpose
+    ) -> Optional["OneTimeToken"]:
+        query = (
+            select(OneTimeToken)
+            .where(
+                OneTimeToken.owner_id == owner_id,
+                OneTimeToken.purpose == purpose,
+            )
+            .order_by(OneTimeToken.created_at.desc())
+            .limit(1)
+        )
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def invalidate_all_for_user(
+        session: AsyncSession, owner_id: int, purpose: OneTimeTokenPurpose
+    ) -> None:
+        query = (
+            update(OneTimeToken)
+            .where(
+                OneTimeToken.owner_id == owner_id,
+                OneTimeToken.purpose == purpose,
+                OneTimeToken.used == False,  # noqa: E712
+            )
+            .values(used=True)
+        )
+        await session.execute(query)
+
+    @staticmethod
+    async def delete_all_for_user(session: AsyncSession, owner_id: int) -> None:
+        query = delete(OneTimeToken).where(OneTimeToken.owner_id == owner_id)
+        await session.execute(query)
+
 
 class DatabaseClient:
     instance: Optional["DatabaseClient"] = None
@@ -176,6 +324,7 @@ class DatabaseClient:
             connect_args={"server_settings": {"search_path": "public"}},
         )
 
+        log.success("Successfully created async engine from URL")
         cls.instance = cls
         return cls
 
@@ -196,6 +345,7 @@ class DatabaseClient:
                     await session.commit()
                 except Exception:
                     await session.rollback()
+                    await session.invalidate()
                     raise
 
 
