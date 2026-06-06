@@ -16,13 +16,25 @@
         </p>
 
         <div class="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
-            <input
-                id="url-input" type="url"
-                placeholder="Paste your long URL here…"
-                class="flex-1 px-5 py-4 rounded-lg text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 text-base border-0"
-                style="--tw-ring-color:#EF6C00"
-            />
+            <div class="relative flex-1">
+                <input
+                    id="url-input" type="url"
+                    placeholder="Paste your long URL here…"
+                    class="w-full px-5 py-4 pr-28 rounded-lg bg-white text-gray-900 placeholder-gray-400
+                           focus:outline-none focus:ring-2 text-base border-0"
+                    style="--tw-ring-color:#EF6C00"
+                />
+                <button id="paste-btn" type="button" title="Paste from clipboard"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5
+                           px-3 py-2 rounded-md text-sm font-medium text-gray-500
+                           hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Paste
+                </button>
+            </div>
             <button id="shorten-btn"
                 class="px-8 py-4 rounded-lg font-bold text-white text-base transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
                 style="background:#EF6C00"
@@ -211,5 +223,23 @@
     {% endif %}
 
     urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') shortenBtn.click(); });
+
+    // ── Paste from clipboard ──────────────────────────────────────────────────
+    const pasteBtn = document.getElementById('paste-btn');
+    const pasteLabel = pasteBtn.lastChild;
+    pasteBtn.addEventListener('click', async () => {
+        try {
+            const text = (await navigator.clipboard.readText()).trim();
+            if (text) {
+                urlInput.value = text;
+                pasteLabel.textContent = ' Pasted';
+                setTimeout(() => { pasteLabel.textContent = ' Paste'; }, 1500);
+            }
+            urlInput.focus();
+        } catch {
+            // Clipboard read blocked/unsupported — let the user paste manually
+            urlInput.focus();
+        }
+    });
 </script>
 {% endblock %}

@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* Scan the Jinja templates for class names */
+@source "../../templates";
+
+/* Equivalent of v3 `darkMode: 'class'` */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Ported from the old inline tailwind.config colors */
+@theme {
+  --color-navy: #0F1923;
+  --color-navy-light: #162535;
+  --color-brand: #EF6C00;
+  --color-brand-dark: #D4600A;
+}
