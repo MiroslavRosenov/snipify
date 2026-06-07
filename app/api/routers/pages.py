@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from loguru import logger as log
 
 from app.api.routers.security import decode_jwt_token, get_current_user, hash_value
+from app.config import Config
 from app.models.database import (
     OneTimeToken,
     OneTimeTokenPurpose,
@@ -20,6 +21,8 @@ from app.utils import error_response
 
 pages_router = APIRouter()
 templates = Jinja2Templates(directory=Path(__file__).parent.parent.parent / "templates")
+# Available to every template (e.g. the contact link in the shared footer).
+templates.env.globals["contact_email"] = Config.CONTACT_EMAIL
 
 
 async def get_optional_user(
@@ -34,6 +37,49 @@ async def get_optional_user(
 
 
 OptionalUserDependency = Annotated[Optional[User], Depends(get_optional_user)]
+
+
+# Shared values rendered into the legal pages, sourced from configuration.
+LEGAL_CONTEXT = {
+    "effective_date": Config.LEGAL_EFFECTIVE_DATE,
+    "contact_email": Config.CONTACT_EMAIL,
+    "governing_law": Config.LEGAL_GOVERNING_LAW,
+}
+
+
+def render_legal(
+    request: Request, response: Response, user: Optional[User], template: str
+) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            request,
+            template,
+            context={"request": request, "user": user, **LEGAL_CONTEXT},
+            headers=response.headers,
+        )
+    except Exception:
+        return error_response(request, 500)
+
+
+@pages_router.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy_page(
+    request: Request, response: Response, user: OptionalUserDependency
+) -> HTMLResponse:
+    return render_legal(request, response, user, "legal/privacy_policy.html")
+
+
+@pages_router.get("/cookie-policy", response_class=HTMLResponse)
+async def cookie_policy_page(
+    request: Request, response: Response, user: OptionalUserDependency
+) -> HTMLResponse:
+    return render_legal(request, response, user, "legal/cookie_policy.html")
+
+
+@pages_router.get("/terms", response_class=HTMLResponse)
+async def terms_page(
+    request: Request, response: Response, user: OptionalUserDependency
+) -> HTMLResponse:
+    return render_legal(request, response, user, "legal/terms.html")
 
 
 @pages_router.get("/", response_class=HTMLResponse)

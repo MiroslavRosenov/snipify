@@ -1,8 +1,10 @@
 [project]
-name = "url-shortener"
+name = "snipify"
 version = "0.1.0"
-description = "Add your description here"
+description = "A fast, free, and secure URL shortener built with FastAPI, async SQLAlchemy, and Tailwind CSS."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     "asyncpg>=0.31.0",

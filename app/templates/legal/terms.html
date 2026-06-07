@@ -1,0 +1,108 @@
+{% extends "legal/_base.html" %}
+
+{% block title %}Terms &amp; Conditions – Snipify{% endblock %}
+{% block heading %}Terms &amp; Conditions{% endblock %}
+
+{% block body %}
+<p>
+    These Terms &amp; Conditions ("Terms") govern your access to and use of <strong>Snipify</strong> (the
+    "Service"). By creating an account or using the Service, you agree to be bound by these Terms. If you do not
+    agree, please do not use the Service.
+</p>
+
+<h2>1. Eligibility</h2>
+<p>
+    You must be at least 16 years old to use the Service. By using it, you confirm that you meet this
+    requirement and that the information you provide is accurate and complete.
+</p>
+
+<h2>2. Your account</h2>
+<ul>
+    <li>You are responsible for maintaining the confidentiality of your login credentials.</li>
+    <li>You are responsible for all activity that occurs under your account.</li>
+    <li>You must notify us promptly if you suspect any unauthorised use of your account.</li>
+    <li>You must provide a valid email address and keep it up to date.</li>
+</ul>
+
+<h2>3. Acceptable use</h2>
+<p>When using the Service, you agree that you will <strong>not</strong> create, shorten, store, or distribute links that:</p>
+<ul>
+    <li>point to content that is illegal, infringing, defamatory, or harmful;</li>
+    <li>distribute malware, viruses, or other malicious code;</li>
+    <li>facilitate phishing, fraud, scams, or other deceptive practices;</li>
+    <li>contain or link to child sexual abuse material or other prohibited content;</li>
+    <li>are used to send spam or unsolicited bulk messages;</li>
+    <li>violate the privacy or intellectual property rights of others;</li>
+    <li>attempt to disrupt, overload, or gain unauthorised access to the Service or its infrastructure.</li>
+</ul>
+
+<h2>4. Links and content</h2>
+<p>
+    You retain responsibility for the destination URLs you shorten. We reserve the right, at our discretion, to
+    disable, remove, or refuse any short link that we believe violates these Terms or applicable law, with or
+    without notice.
+</p>
+
+<h2>5. Service availability</h2>
+<p>
+    The Service is provided on an "as is" and "as available" basis. While we strive to keep the Service running
+    reliably, we do not guarantee that it will be uninterrupted, error-free, or that links will remain available
+    indefinitely. We may modify, suspend, or discontinue all or part of the Service at any time.
+</p>
+
+<h2>6. Account deactivation and termination</h2>
+<p>
+    You may deactivate your account at any time from your account settings. Deactivation revokes your access and
+    cannot be undone. We may also suspend or terminate your account if you breach these Terms. Links you
+    previously created may continue to function after deactivation so that they do not break for people who
+    already hold them.
+</p>
+
+<h2>7. Disclaimer of warranties</h2>
+<p>
+    To the fullest extent permitted by law, we disclaim all warranties, express or implied, including but not
+    limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement.
+    You use the Service at your own risk.
+</p>
+
+<h2>8. Limitation of liability</h2>
+<p>
+    To the fullest extent permitted by law, we shall not be liable for any indirect, incidental, special,
+    consequential, or punitive damages, or for any loss of data, profits, or goodwill, arising from your use of
+    or inability to use the Service. Nothing in these Terms excludes liability that cannot be excluded by law.
+</p>
+
+<h2>9. Open source software</h2>
+<p>
+    Snipify is open source. The source code is available on
+    <a href="https://github.com/MiroslavRosenov/snipify" target="_blank" rel="noopener noreferrer">GitHub</a>
+    and is provided under its accompanying licence. These Terms govern your use of <em>this hosted instance</em>
+    of the Service and are separate from the licence that governs the source code itself.
+</p>
+
+<h2>10. Privacy</h2>
+<p>
+    Your use of the Service is also governed by our <a href="/privacy-policy">Privacy Policy</a> and
+    <a href="/cookie-policy">Cookie Policy</a>, which explain how we handle your data.
+</p>
+
+<h2>11. Changes to these Terms</h2>
+<p>
+    We may update these Terms from time to time. When we do, we will revise the "Last updated" date at the top of
+    this page. Your continued use of the Service after changes take effect constitutes acceptance of the updated
+    Terms.
+</p>
+
+<h2>12. Governing law</h2>
+<p>
+    These Terms are governed by the laws of {{ governing_law }}, without regard to its conflict-of-law
+    provisions. Any disputes shall be subject to the exclusive jurisdiction of the competent courts in that
+    jurisdiction.
+</p>
+
+<h2>13. Contact us</h2>
+<p>
+    If you have any questions about these Terms, contact us at
+    <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+</p>
+{% endblock %}

@@ -81,8 +81,11 @@ async def requests_log_middleware(
         else log.warning
     )  # 2xx and 3xx would be successful responses
     log_function(
-        "{} request on route '{}' HTTP/{} with status code {} took {} seconds to process",
+        "{} request from {} on route '{}' HTTP/{} with status code {} took {} seconds to process",
         scope["method"],
+        http_request.headers.get(
+            "X-Real-IP", getattr(http_request.client, "host", "-")
+        ),
         get_path_with_query_string(scope),
         scope["http_version"],
         response.status_code,

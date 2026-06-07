@@ -5,7 +5,11 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from app.config import Config
+
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+# Available to every template (e.g. the contact link in the shared footer).
+templates.env.globals["contact_email"] = Config.CONTACT_EMAIL
 
 HTTP_ERRORS: dict[int, tuple[str, str]] = {
     400: (

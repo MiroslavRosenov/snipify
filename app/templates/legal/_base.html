@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .legal-prose h2 { font-size: 1.25rem; font-weight: 700; color: #111827; margin-top: 2.5rem; margin-bottom: .75rem; }
+    .legal-prose h2:first-child { margin-top: 0; }
+    .legal-prose h3 { font-size: 1rem; font-weight: 600; color: #111827; margin-top: 1.5rem; margin-bottom: .5rem; }
+    .legal-prose p { margin-bottom: 1rem; }
+    .legal-prose ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+    .legal-prose ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
+    .legal-prose li { margin-bottom: .375rem; }
+    .legal-prose a { color: #EF6C00; text-decoration: underline; }
+    .legal-prose strong { font-weight: 600; color: #111827; }
+    .legal-prose table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: .8125rem; }
+    .legal-prose th, .legal-prose td { border: 1px solid #e5e7eb; padding: .5rem .75rem; text-align: left; vertical-align: top; }
+    .legal-prose th { background: #f9fafb; font-weight: 600; color: #111827; }
+    .dark .legal-prose h2, .dark .legal-prose h3, .dark .legal-prose strong, .dark .legal-prose th { color: #f3f4f6; }
+    .dark .legal-prose th { background: #374151; }
+    .dark .legal-prose th, .dark .legal-prose td { border-color: #374151; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 dark:bg-gray-900 py-12 sm:py-16 transition-colors">
+    <div class="max-w-3xl mx-auto px-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 sm:p-10 transition-colors">
+            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight mb-2">{% block heading %}{% endblock %}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">Last updated: {{ effective_date }}</p>
+            <div class="legal-prose text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+                {% block body %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

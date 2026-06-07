@@ -20,6 +20,11 @@ class Config:
     SMTP_FROM_NAME: str = config("SMTP_FROM_NAME", default=None)
     SMTP_FROM_EMAIL: str = config("SMTP_FROM_EMAIL", default=None)
 
+    # Contact / legal details surfaced in the UI and policy pages.
+    CONTACT_EMAIL: str = config("CONTACT_EMAIL", default="-")
+    LEGAL_EFFECTIVE_DATE: str = config("LEGAL_EFFECTIVE_DATE", default="-")
+    LEGAL_GOVERNING_LAW: str = config("LEGAL_GOVERNING_LAW", default="-")
+
     @classmethod
     def validate_environment(cls, value: str) -> None:
         allowed_environments = ("local", "dev", "production")

@@ -1,0 +1,131 @@
+{% extends "legal/_base.html" %}
+
+{% block title %}Privacy Policy – Snipify{% endblock %}
+{% block heading %}Privacy Policy{% endblock %}
+
+{% block body %}
+<p>
+    This Privacy Policy explains how <strong>Snipify</strong> ("we", "us", or "our") collects, uses, and
+    protects your personal data when you use our URL shortening service (the "Service"). We are committed to
+    handling your data in accordance with the <strong>EU General Data Protection Regulation (GDPR)</strong>
+    and other applicable data protection laws.
+</p>
+<p>
+    By using the Service, you acknowledge that you have read and understood this policy. If you do not agree
+    with it, please do not use the Service.
+</p>
+
+<h2>1. Who is responsible for your data</h2>
+<p>
+    The data controller responsible for your personal data is the operator of this Snipify instance. For any
+    privacy-related questions or to exercise your rights, contact us at
+    <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+</p>
+
+<h2>2. What data we collect</h2>
+<p>We collect only the data we need to operate the Service:</p>
+<ul>
+    <li><strong>Account data</strong> — your email address and a securely hashed version of your password
+        (we never store your password in plain text).</li>
+    <li><strong>Link data</strong> — the original (destination) URLs you submit, the short aliases we generate,
+        and the association between those links and your account.</li>
+    <li><strong>Technical and log data</strong> — when you make a request, our servers record limited
+        information such as your IP address, the requested path and HTTP method, the response status, and the
+        time taken to process the request. This is used for security, debugging, and reliability.</li>
+    <li><strong>Cookies</strong> — small files used to keep you signed in and to remember your display
+        preferences. See our <a href="/cookie-policy">Cookie Policy</a> for full details.</li>
+</ul>
+<p>
+    We do <strong>not</strong> use advertising trackers, third-party analytics, or sell your data to anyone.
+</p>
+
+<h2>3. How and why we use your data (legal bases)</h2>
+<p>Under the GDPR, we process your data on the following legal bases:</p>
+<table>
+    <thead>
+        <tr><th>Purpose</th><th>Legal basis (GDPR Art. 6)</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Creating and managing your account, shortening links, and performing redirects</td><td>Performance of a contract (Art. 6(1)(b))</td></tr>
+        <tr><td>Sending transactional emails (account activation, password reset, deactivation notices)</td><td>Performance of a contract (Art. 6(1)(b))</td></tr>
+        <tr><td>Keeping the Service secure, preventing abuse, and maintaining server logs</td><td>Legitimate interests (Art. 6(1)(f))</td></tr>
+        <tr><td>Complying with legal obligations where required</td><td>Legal obligation (Art. 6(1)(c))</td></tr>
+    </tbody>
+</table>
+
+<h2>4. Email communications</h2>
+<p>
+    We send only <strong>transactional</strong> emails that are necessary to operate your account — for example,
+    to confirm your registration, to let you reset your password, or to notify you that your account has been
+    deactivated. We do not send marketing emails.
+</p>
+
+<h2>5. Who we share data with</h2>
+<p>We share personal data only with service providers that help us run the Service, namely:</p>
+<ul>
+    <li>Our <strong>hosting provider</strong>, which stores the data on our behalf.</li>
+    <li>Our <strong>email (SMTP) provider</strong>, used solely to deliver the transactional emails described above.</li>
+</ul>
+<p>
+    These providers act as data processors and are only permitted to process your data on our instructions.
+    We may also disclose data where required by law.
+</p>
+
+<h2>6. International transfers</h2>
+<p>
+    Where personal data is transferred outside the European Economic Area (EEA), we ensure appropriate
+    safeguards are in place, such as the European Commission's Standard Contractual Clauses or transfers to
+    countries with an adequacy decision.
+</p>
+
+<h2>7. How long we keep your data</h2>
+<ul>
+    <li><strong>Account data</strong> is kept for as long as your account is active.</li>
+    <li>When you <strong>deactivate your account</strong>, your login credentials are revoked and your account
+        can no longer be accessed or restored. Please note that links you previously created may continue to
+        function so that they do not break for people who already have them.</li>
+    <li><strong>Server logs</strong> are retained only for a limited period necessary for security and
+        operational purposes, after which they are deleted or anonymised.</li>
+</ul>
+
+<h2>8. Your rights under the GDPR</h2>
+<p>If you are in the EEA, you have the following rights regarding your personal data:</p>
+<ul>
+    <li><strong>Access</strong> — request a copy of the personal data we hold about you.</li>
+    <li><strong>Rectification</strong> — ask us to correct inaccurate or incomplete data.</li>
+    <li><strong>Erasure</strong> — ask us to delete your personal data ("right to be forgotten").</li>
+    <li><strong>Restriction</strong> — ask us to limit how we process your data.</li>
+    <li><strong>Portability</strong> — receive your data in a structured, machine-readable format.</li>
+    <li><strong>Objection</strong> — object to processing based on our legitimate interests.</li>
+    <li><strong>Withdraw consent</strong> — where processing is based on consent, withdraw it at any time.</li>
+</ul>
+<p>
+    To exercise any of these rights, email us at <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+    You also have the right to lodge a complaint with your local data protection supervisory authority.
+</p>
+
+<h2>9. Data security</h2>
+<p>
+    We take appropriate technical and organisational measures to protect your data. Passwords are hashed using
+    a strong, modern algorithm (Argon2), authentication cookies are HTTP-only and transmitted securely in
+    production, and sessions use short-lived access tokens with rotating refresh tokens.
+</p>
+
+<h2>10. Children's privacy</h2>
+<p>
+    The Service is not intended for children under the age of 16, and we do not knowingly collect personal data
+    from them. If you believe a child has provided us with personal data, please contact us so we can remove it.
+</p>
+
+<h2>11. Changes to this policy</h2>
+<p>
+    We may update this Privacy Policy from time to time. When we do, we will revise the "Last updated" date at
+    the top of this page. Significant changes may be communicated to you directly where appropriate.
+</p>
+
+<h2>12. Contact us</h2>
+<p>
+    If you have any questions about this Privacy Policy or how we handle your data, contact us at
+    <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+</p>
+{% endblock %}
