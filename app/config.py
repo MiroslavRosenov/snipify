@@ -26,7 +26,7 @@ class Config:
 
         if str(value).casefold() not in allowed_environments:
             raise RuntimeError(
-                f"Invalid 'ENVIROMENT' provided - {value}, ensure that in match any of ({allowed_environments})"
+                f"Invalid 'ENVIRONMENT' provided - {value}, ensure that in match any of ({allowed_environments})"
             )
 
     @classmethod

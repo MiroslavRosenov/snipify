@@ -200,9 +200,6 @@ async def get_current_user(
             return await User.get_by_id(session, stored_refresh_token.owner_id)
 
         else:
-            log.warning(
-                "Received unathorized request without access and refresh token!"
-            )
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     except jwt.InvalidSignatureError:

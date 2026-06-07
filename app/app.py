@@ -8,6 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from uvicorn.protocols.utils import get_path_with_query_string
+
 from app.config import Config
 from app.api.routers.security import auth_router
 from app.api.routers.redirect import redirect_router
@@ -24,6 +26,7 @@ async def create_dependencies() -> None:
 
 async def app_lifespan(app: FastAPI):
     await create_dependencies()
+    log.success("Successfully started the app on '{}' environment", Config.ENVIRONMENT)
     yield
     await cleanup_dependecies()
 
@@ -50,25 +53,40 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.exception_handler(404)
-async def unicorn_exception_handler(request: Request, exc: HTTPException):
+async def not_found_exception_handler(request: Request, exc: HTTPException):
     return error_response(request, 404)
 
 
-if Config.is_development_environment():
+@app.exception_handler(500)
+async def server_exception_handler(request: Request, exc: HTTPException):
+    log.opt(exception=exc).error("Unexpected error on request {} - {}", request, exc)
+    return error_response(request, 500)
 
-    @app.middleware("http")
-    async def log_process_time(
-        http_request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
-        start_time = time()
-        response = await call_next(http_request)
-        process_time = time() - start_time
 
-        log_function = log.info if process_time < 2 else log.warning
-        log_function(
-            "Request from {} took {} seconds to process",
-            http_request.url._url,
-            round(process_time, 2),
+@app.middleware("http")
+async def requests_log_middleware(
+    http_request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    start_time = time()
+    response = await call_next(http_request)
+    process_time = time() - start_time
+
+    scope = http_request.scope
+    log_function = (
+        log.info
+        if (
+            process_time < 2
+            and (response.status_code >= 200 and response.status_code < 400)
         )
+        else log.warning
+    )  # 2xx and 3xx would be successful responses
+    log_function(
+        "{} request on route '{}' HTTP/{} with status code {} took {} seconds to process",
+        scope["method"],
+        get_path_with_query_string(scope),
+        scope["http_version"],
+        response.status_code,
+        round(process_time, 2),
+    )
 
-        return response
+    return response
