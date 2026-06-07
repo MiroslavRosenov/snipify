@@ -48,7 +48,7 @@
         {% if user %}
         <!-- Result box (authenticated only) -->
         <div id="result-box"
-            class="hidden mt-5 max-w-2xl mx-auto bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl p-4 flex items-center justify-between gap-4 text-left">
+            class="hidden mt-5 max-w-2xl mx-auto bg-white/10 border border-white/20 rounded-xl p-4 flex items-center justify-between gap-4 text-left">
             <div class="min-w-0">
                 <p class="text-gray-400 text-xs mb-1 uppercase tracking-wide">Your short link</p>
                 <a id="result-link" href="#" target="_blank"
@@ -62,7 +62,7 @@
         </div>
         <!-- Error box (authenticated only) -->
         <div id="error-box"
-            class="hidden mt-5 max-w-2xl mx-auto px-4 py-3 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 border-opacity-30 text-red-300 text-sm text-left">
+            class="hidden mt-5 max-w-2xl mx-auto px-4 py-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 text-sm text-left">
         </div>
         {% else %}
         <p class="text-gray-500 text-sm mt-5">Free account required &mdash; no credit card needed.</p>
