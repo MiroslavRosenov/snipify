@@ -13,6 +13,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Snipify – URL Shortener{% endblock %}</title>
+
+    <!-- Primary meta tags -->
+    <meta name="description" content="{% block meta_description %}Snipify is a fast, free, and secure URL shortener. Shorten, share, and manage all your links in one place.{% endblock %}" />
+    <meta name="author" content="Snipify" />
+    <meta name="theme-color" content="#0F1923" />
+    <link rel="canonical" href="{{ request.url }}" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
+    <meta property="og:site_name" content="Snipify" />
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}" />
+    <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}" />
+    <meta property="og:url" content="{{ request.url }}" />
+    <meta property="og:image" content="{% block og_image %}{{ request.base_url }}static/favicon-512.png{% endblock %}" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{{ self.og_title() }}" />
+    <meta name="twitter:description" content="{{ self.og_description() }}" />
+    <meta name="twitter:image" content="{{ self.og_image() }}" />
+
     <link rel="icon" href="/static/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png" />

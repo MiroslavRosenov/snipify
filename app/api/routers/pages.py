@@ -21,8 +21,16 @@ from app.utils import error_response
 
 pages_router = APIRouter()
 templates = Jinja2Templates(directory=Path(__file__).parent.parent.parent / "templates")
+
 # Available to every template (e.g. the contact link in the shared footer).
 templates.env.globals["contact_email"] = Config.CONTACT_EMAIL
+
+# Shared values rendered into the legal pages, sourced from configuration.
+LEGAL_CONTEXT = {
+    "effective_date": Config.LEGAL_EFFECTIVE_DATE,
+    "contact_email": Config.CONTACT_EMAIL,
+    "governing_law": Config.LEGAL_GOVERNING_LAW,
+}
 
 
 async def get_optional_user(
@@ -37,14 +45,6 @@ async def get_optional_user(
 
 
 OptionalUserDependency = Annotated[Optional[User], Depends(get_optional_user)]
-
-
-# Shared values rendered into the legal pages, sourced from configuration.
-LEGAL_CONTEXT = {
-    "effective_date": Config.LEGAL_EFFECTIVE_DATE,
-    "contact_email": Config.CONTACT_EMAIL,
-    "governing_law": Config.LEGAL_GOVERNING_LAW,
-}
 
 
 def render_legal(
