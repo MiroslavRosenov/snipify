@@ -15,12 +15,14 @@ from app.api.routers.security import auth_router
 from app.api.routers.redirect import redirect_router
 from app.api.routers.pages import pages_router
 from app.models.database import DatabaseClient
+from app.models.redis import RedisClient
 from app.smtp_client import SMTPClient
 from app.utils import error_response, friendly_validation_message
 
 
 async def create_dependencies() -> None:
     DatabaseClient.get_instance(Config.DATABASE_URL)
+    RedisClient.get_instance(Config.REDIS_URL)
     SMTPClient.get_instance()
 
 
@@ -33,6 +35,7 @@ async def app_lifespan(app: FastAPI):
 
 async def cleanup_dependecies() -> None:
     await DatabaseClient.cleanup()
+    await RedisClient.cleanup()
     await SMTPClient.cleanup()
 
 

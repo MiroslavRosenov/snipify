@@ -6,8 +6,15 @@ from fastapi.routing import APIRouter
 from fastapi.responses import RedirectResponse
 from fastapi.requests import Request
 
+from app.models.cache import (
+    invalidate_user_urls,
+    read_cache,
+    urls_cache_key,
+    write_cache,
+)
 from app.api.routers.security import UserDependency
 from app.models.database import SessionDependency, Url
+from app.models.redis import RedisDependency
 from app.models.requests import (
     CreateUrlRequest,
     CreateUrlResponse,
@@ -24,25 +31,37 @@ async def get_user_urls(
     http_request: Request,
     user: UserDependency,
     session: SessionDependency,
+    redis: RedisDependency,
     page: int = Query(1, ge=1),
 ) -> PaginatedUrlsResponse:
     limit = 10
     offset = (page - 1) * limit
-    total = await Url.count_by_user_id(session, user.id)
-    urls = await Url.get_by_user_id(session, user.id, offset=offset, limit=limit)
-    pages = max(1, (total + limit - 1) // limit)
+    cache_key = urls_cache_key(user.id, page)
+
+    data = await read_cache(redis, cache_key)
+    if data is None:
+        total = await Url.count_by_user_id(session, user.id)
+        urls = await Url.get_by_user_id(session, user.id, offset=offset, limit=limit)
+        pages = max(1, (total + limit - 1) // limit)
+        data = {
+            "items": [{"origin": url.origin, "alias": url.alias} for url in urls],
+            "total": total,
+            "pages": pages,
+        }
+        await write_cache(redis, cache_key, data)
+
     return PaginatedUrlsResponse(
         items=[
             UrlItemResponse(
-                origin=url.origin,
-                alias=url.alias,
-                short_url=format_redirect_url(http_request, url.alias),
+                origin=item["origin"],
+                alias=item["alias"],
+                short_url=format_redirect_url(http_request, item["alias"]),
             )
-            for url in urls
+            for item in data["items"]
         ],
-        total=total,
+        total=data["total"],
         page=page,
-        pages=pages,
+        pages=data["pages"],
     )
 
 
@@ -52,6 +71,7 @@ async def create_url(
     request: CreateUrlRequest,
     session: SessionDependency,
     user: UserDependency,
+    redis: RedisDependency,
 ) -> CreateUrlResponse:
     url = str(request.url._url)
     if row := await Url.get_url_row(session, url):
@@ -59,6 +79,7 @@ async def create_url(
 
     alias = generate_random_id()
     await Url.insert(session, url, alias, user.id)
+    await invalidate_user_urls(redis, user.id)
 
     return CreateUrlResponse(url_path=format_redirect_url(http_request, alias))
 

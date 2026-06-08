@@ -29,6 +29,7 @@ from app.models.requests import (
     UserAuthRequest,
 )
 from app.smtp_client import SMTPClient
+from app.utils import timeit
 
 auth_router = APIRouter(prefix="/authentication")
 password_hash = PasswordHash.recommended()
@@ -153,6 +154,7 @@ def decode_jwt_token(*, token: str, raise_exceptions: bool = True) -> Optional[D
             raise exc
 
 
+@timeit
 async def get_current_user(
     session: SessionDependency,
     http_request: Request,

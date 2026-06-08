@@ -7,6 +7,7 @@ from decouple import config
 class Config:
     ENVIRONMENT: str = config("ENVIRONMENT", default="local")
     DATABASE_URL: str = config("DATABASE_URL")
+    REDIS_URL: str = config("REDIS_URL")
 
     SECRET_KEY: str = config("SECRET_KEY")
     ALGORITHM: str = config("ALGORITHM")

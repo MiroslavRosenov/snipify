@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from typing import Annotated, Optional
+from typing import Annotated, Awaitable, Optional
 from loguru import logger as log
 
 from fastapi import Depends
@@ -20,9 +20,20 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
+from app.models.cache import LRUCache, cached, invalidates
 from app.config import Config
+from app.utils import timeit
 
 lower = func.LOWER
+
+# Caches User rows by email for the auth hot path. Invalidated whenever a user's hashed_password or active flag changes.
+# The structure is LRUCache[email, User]
+user_email_cache: "LRUCache[str, User]" = LRUCache(maxsize=512)
+
+
+def email_for_id(session: AsyncSession, user_id: int) -> "Awaitable[Optional[str]]":
+    """Resolve a user's email by id; used as an invalidation key resolver."""
+    return session.scalar(select(User.email).where(User.id == user_id))
 
 
 class Base(DeclarativeBase): ...
@@ -44,6 +55,7 @@ class Url(Base):
         await session.execute(query)
 
     @staticmethod
+    @timeit
     async def get_url_row(session: AsyncSession, url: str):
         query = select(Url).where(lower(Url.origin) == lower(url))
         result = await session.execute(query)
@@ -51,6 +63,7 @@ class Url(Base):
         return result.scalar_one_or_none()
 
     @staticmethod
+    @timeit
     async def get_url_from_alias(session: AsyncSession, alias: str):
         query = select(Url).where(lower(Url.alias) == lower(alias))
         result = await session.execute(query)
@@ -58,6 +71,7 @@ class Url(Base):
         return result.scalar_one_or_none()
 
     @staticmethod
+    @timeit
     async def get_by_user_id(
         session: AsyncSession, user_id: int, offset: int = 0, limit: int = 10
     ) -> list["Url"]:
@@ -73,8 +87,9 @@ class Url(Base):
         return list(result.scalars().all())
 
     @staticmethod
+    @timeit
     async def count_by_user_id(session: AsyncSession, user_id: int) -> int:
-        query = select(func.count(Url.id)).where(Url.created_by == user_id)
+        query = select(func.count()).where(Url.created_by == user_id)
         result = await session.execute(query)
 
         return result.scalar_one()
@@ -92,9 +107,29 @@ class User(Base):
         default=lambda: datetime.datetime.now(datetime.timezone.utc),
     )
 
+    def snapshot(self) -> "User":
+        """A detached, session-independent copy safe to keep in the cache.
+
+        Caching the live ORM instance is unsafe: the session expires its
+        attributes on commit, so a later read would raise DetachedInstanceError.
+        """
+        return User(
+            id=self.id,
+            email=self.email,
+            hashed_password=self.hashed_password,
+            active=self.active,
+            created_at=self.created_at,
+        )
+
     @staticmethod
+    @timeit
+    @cached(
+        cache=user_email_cache,
+        key=lambda session, email: email,
+        store=lambda user: user.snapshot(),
+    )
     async def get_by_email(session: AsyncSession, email: str) -> Optional["User"]:
-        query = select(User).where(lower(User.email) == lower(email))
+        query = select(User).where(User.email == email)
         result = await session.execute(query)
 
         return result.scalar_one_or_none()
@@ -112,6 +147,10 @@ class User(Base):
         await session.execute(query)
 
     @staticmethod
+    @invalidates(
+        cache=user_email_cache,
+        key=lambda session, user_id, password_hash: email_for_id(session, user_id),
+    )
     async def update_password_by_id(
         session: AsyncSession, user_id: int, password_hash: str
     ) -> None:
@@ -121,6 +160,10 @@ class User(Base):
         await session.execute(query)
 
     @staticmethod
+    @invalidates(
+        cache=user_email_cache,
+        key=lambda session, email, password_hash: email,
+    )
     async def update_password_by_email(
         session: AsyncSession, email: str, password_hash: str
     ) -> None:
@@ -132,11 +175,19 @@ class User(Base):
         await session.execute(query)
 
     @staticmethod
+    @invalidates(
+        cache=user_email_cache,
+        key=lambda session, user_id: email_for_id(session, user_id),
+    )
     async def activate_by_id(session: AsyncSession, user_id: int) -> None:
         query = update(User).values(active=True).where(User.id == user_id)
         await session.execute(query)
 
     @staticmethod
+    @invalidates(
+        cache=user_email_cache,
+        key=lambda session, user_id: email_for_id(session, user_id),
+    )
     async def deactivate_by_id(session: AsyncSession, user_id: int) -> None:
         query = update(User).values(active=False).where(User.id == user_id)
         await session.execute(query)
@@ -321,6 +372,17 @@ class DatabaseClient:
 
         cls.engine = create_async_engine(
             database_url,
+            # The DB is remote, so a fresh connection costs ~800ms to hand-shake.
+            # Keep a warm pool and never hand out a dead connection:
+            #  - pool_pre_ping: cheaply verify a connection before use, so one the
+            #    remote dropped while idle is transparently replaced instead of
+            #    stalling/erroring on the next request.
+            #  - pool_recycle: proactively retire connections older than 5 min,
+            #    staying under the idle timeouts of most managed PGs / NAT / LBs.
+            pool_size=10,
+            max_overflow=5,
+            pool_pre_ping=True,
+            pool_recycle=300,
             connect_args={"server_settings": {"search_path": "public"}},
         )
 

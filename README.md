@@ -22,6 +22,7 @@
 - ✉️ **Transactional email** — account activation, password reset, and deactivation notices via SMTP.
 - 🔁 **Password reset & account activation** — secure, single-use, expiring tokens.
 - 🌗 **Light & dark mode** — a responsive Jinja2 + Tailwind UI with no-flash theme switching.
+- ⚡ **Fast by default** — LRU and Redis caching keep hot paths quick.
 - 🩺 **Self-hostable** — fully open source; run your own instance.
 
 ## Tech Stack
@@ -30,6 +31,7 @@
 | ------------ | ----------------------------------------------------- |
 | **Backend**  | [FastAPI](https://fastapi.tiangolo.com/) (async)      |
 | **Database** | PostgreSQL via [SQLAlchemy](https://www.sqlalchemy.org/) (async) + [asyncpg](https://github.com/MagicStack/asyncpg) |
+| **Cache**    | LRU + [Redis](https://redis.io/) via [redis-py](https://redis.readthedocs.io/) |
 | **Auth**     | [PyJWT](https://pyjwt.readthedocs.io/) + [pwdlib](https://frankie567.github.io/pwdlib/) (Argon2) |
 | **Frontend** | [Jinja2](https://jinja.palletsprojects.com/) templates + [Tailwind CSS](https://tailwindcss.com/) (compiled locally) |
 | **Server**   | [Uvicorn](https://www.uvicorn.org/)                   |
@@ -41,6 +43,7 @@
 
 - Python **3.12+**
 - A running **PostgreSQL** database
+- A running **Redis** server
 - [uv](https://docs.astral.sh/uv/) for dependency management
 
 ### 1. Install dependencies
@@ -65,6 +68,7 @@ Snipify reads configuration from the environment (or a `.env` file). Create a `.
 # Core
 ENVIRONMENT=local                       # local | dev | production
 DATABASE_URL=postgresql+asyncpg://db_user:db_password@localhost:5432/your_database
+REDIS_URL=redis://localhost:6379/0
 
 # Auth
 SECRET_KEY=replace-with-a-long-random-secret   # e.g. `openssl rand -hex 32`
@@ -100,6 +104,8 @@ Add `--watch` during development to rebuild on changes.
 
 ### 5. Run the app
 
+Make sure **PostgreSQL** and **Redis** are running and reachable at `DATABASE_URL` and `REDIS_URL`, then start the app:
+
 ```bash
 uv run python main.py
 ```
@@ -121,6 +127,8 @@ app/
 │   └── security.py     # Auth: register, login, tokens, password reset
 ├── models/
 │   ├── database.py     # SQLAlchemy models + async session
+│   ├── cache.py        # LRU + Redis caching helpers
+│   ├── redis.py        # Async Redis client with retry/connection management
 │   └── requests.py     # Pydantic request/response schemas
 ├── templates/          # Jinja2 templates (pages + emails)
 └── static/             # Favicons + compiled Tailwind CSS

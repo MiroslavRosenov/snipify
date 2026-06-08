@@ -1,11 +1,18 @@
+import functools
+import inspect
 import secrets
+import time
 from pathlib import Path
+from typing import Awaitable, Callable, TypeVar
 
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from loguru import logger
 
 from app.config import Config
+
+T = TypeVar("T")
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 # Available to every template (e.g. the contact link in the shared footer).
@@ -93,3 +100,52 @@ def friendly_validation_message(errors: list) -> str:
             return "Please enter a valid URL."
     first = errors[0] if errors else {}
     return first.get("msg", "Invalid input. Please check your data.")
+
+
+def _log_elapsed(name: str, start: float) -> None:
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    # opt(depth=1) so the log points at the decorated call site, not this module.
+    logger.opt(depth=1).debug(
+        "Function call for '{}' took {:.2f} ms to complete", name, elapsed_ms
+    )
+
+
+def _timeit_sync(func: Callable[..., T]) -> Callable[..., T]:
+    """Log the wall-clock time of a sync function call at DEBUG level."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> T:
+        start = time.perf_counter()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            _log_elapsed(func.__qualname__, start)
+
+    return wrapper
+
+
+def _timeit_async(
+    func: Callable[..., Awaitable[T]],
+) -> Callable[..., Awaitable[T]]:
+    """Log the wall-clock time of an async function call at DEBUG level."""
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs) -> T:
+        start = time.perf_counter()
+        try:
+            return await func(*args, **kwargs)
+        finally:
+            _log_elapsed(func.__qualname__, start)
+
+    return wrapper
+
+
+def timeit(func: Callable[..., T]) -> Callable[..., T]:
+    """
+    Time a function call at DEBUG level, picking the right wrapper for
+
+    sync vs. async automatically.
+    """
+    if inspect.iscoroutinefunction(func):
+        return _timeit_async(func)  # type: ignore[return-value]
+    return _timeit_sync(func)
