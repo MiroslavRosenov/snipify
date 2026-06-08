@@ -49,7 +49,7 @@ RATE_LIMITS: dict[str, RateLimitRule] = {
     "/authentication/deactivate-account": RateLimitRule(5),
     # Core write / DB-backed product actions.
     "/create_url": RateLimitRule(30),
-    "/urls": RateLimitRule(100),
+    "/urls": RateLimitRule(30),
     # Public redirect resolution — the hot path, kept deliberately generous.
     "/{url}": RateLimitRule(300),
 }

@@ -53,12 +53,26 @@
         try {
             const res = await fetch(`/urls?page=${page}`);
             if (res.status === 401) { window.location.href = '/login'; return; }
+            if (res.status === 429) { renderRateLimited(); return; }
             if (!res.ok) return;
             const data = await res.json();
             currentPage = data.page;
             renderLinks(data);
             renderPagination(data.page, data.pages);
         } catch { /* silently ignore network errors */ }
+    }
+
+    function renderRateLimited() {
+        const container = document.getElementById('links-container');
+        container.innerHTML = `
+            <div class="text-center py-16 text-gray-400 dark:text-gray-500">
+                <svg class="mx-auto mb-3 w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">You're sending too many requests.</p>
+                <p class="text-sm">Please wait a moment and try again.</p>
+            </div>`;
     }
 
     function renderLinks(data) {
