@@ -36,7 +36,14 @@ async def cleanup_dependecies() -> None:
     await SMTPClient.cleanup()
 
 
-app = FastAPI(debug=Config.is_development_environment(), lifespan=app_lifespan)
+is_dev_environment = Config.is_development_environment()
+app = FastAPI(
+    debug=is_dev_environment,
+    lifespan=app_lifespan,
+    docs_url="/docs" if is_dev_environment else None,
+    redoc_url="/redoc" if is_dev_environment else None,
+    openapi_url="/openapi.json" if is_dev_environment else None,
+)
 app.mount(
     "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
 )
