@@ -1,0 +1,28 @@
+[Unit]
+Description=Snipify URL shortener
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=snipify
+Group=snipify
+WorkingDirectory=/usr/snipify
+
+# Config is read from /usr/snipify/.env by python-decouple (the file is
+# git-ignored, so `git reset --hard` during deploys never touches it).
+ExecStart=/usr/snipify/.local/bin/uv run --no-dev python main.py
+
+Restart=on-failure
+RestartSec=5
+
+# Basic hardening.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+# ProtectSystem=full mounts /usr read-only; the app dir lives under it, so
+# explicitly allow writes there (uv cache, .venv, etc.).
+ReadWritePaths=/usr/snipify
+
+[Install]
+WantedBy=multi-user.target

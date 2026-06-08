@@ -1,0 +1,42 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # allow manual re-deploys from the Actions tab
+
+# Never run two deploys at once; let an in-progress deploy finish.
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }} # optional; defaults to 22 if unset
+          script_stop: true # abort on the first failing command
+          script: |
+            set -euo pipefail
+            export PATH="$HOME/.local/bin:$PATH"  # ensure `uv` is found
+
+            cd /usr/snipify
+
+            # Pull the exact commit that triggered this deploy.
+            git fetch --prune origin
+            git reset --hard origin/main
+
+            # Install runtime deps only (CSS is prebuilt & committed, so skip --dev).
+            uv sync --frozen --no-dev
+
+            # Restart and confirm the service came back up.
+            sudo systemctl restart snipify
+            sleep 2
+            sudo systemctl is-active --quiet snipify
+            echo "Deployed $(git rev-parse --short HEAD)"
