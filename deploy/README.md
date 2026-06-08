@@ -73,10 +73,13 @@ of it as a reverse proxy for TLS and public access.
 The workflow runs `sudo systemctl restart snipify`. Grant exactly that, nothing more:
 
 ```bash
-echo 'snipify ALL=(root) NOPASSWD: /usr/bin/systemctl restart snipify, /usr/bin/systemctl is-active snipify' \
+echo 'snipify ALL=(root) NOPASSWD: /usr/bin/systemctl restart snipify' \
   | sudo tee /etc/sudoers.d/snipify
 sudo chmod 440 /etc/sudoers.d/snipify
 ```
+
+> Only `restart` needs root. The deploy's status check (`systemctl is-active`)
+> runs as `snipify` without `sudo`, so it stays out of the sudoers rule.
 
 ## 8. Add an SSH deploy key
 

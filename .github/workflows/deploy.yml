@@ -36,7 +36,9 @@ jobs:
             uv sync --frozen --no-dev
 
             # Restart and confirm the service came back up.
+            # (Status queries don't need root, so no sudo here — keeps the
+            #  passwordless-sudo rule scoped to `restart` only.)
             sudo systemctl restart snipify
             sleep 2
-            sudo systemctl is-active --quiet snipify
+            systemctl is-active --quiet snipify
             echo "Deployed $(git rev-parse --short HEAD)"
