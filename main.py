@@ -12,4 +12,5 @@ if __name__ == "__main__":
         log_config=None,
         access_log=False,
         reload=Config.is_development_environment(),
+        forwarded_allow_ips="*",
     )

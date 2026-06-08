@@ -32,6 +32,7 @@
 | **Backend**  | [FastAPI](https://fastapi.tiangolo.com/) (async)      |
 | **Database** | PostgreSQL via [SQLAlchemy](https://www.sqlalchemy.org/) (async) + [asyncpg](https://github.com/MagicStack/asyncpg) |
 | **Cache**    | LRU + [Redis](https://redis.io/) via [redis-py](https://redis.readthedocs.io/) |
+| **Rate limiting** | [Redis](https://redis.io/) fixed-window counters, per-route and per-identity (user or IP) — enabled in production |
 | **Auth**     | [PyJWT](https://pyjwt.readthedocs.io/) + [pwdlib](https://frankie567.github.io/pwdlib/) (Argon2) |
 | **Frontend** | [Jinja2](https://jinja.palletsprojects.com/) templates + [Tailwind CSS](https://tailwindcss.com/) (compiled locally) |
 | **Server**   | [Uvicorn](https://www.uvicorn.org/)                   |
@@ -121,10 +122,12 @@ app/
 ├── logging.py          # Loguru setup
 ├── smtp_client.py      # Async SMTP client + Jinja email templates
 ├── utils.py            # Helpers (alias generation, error pages, validation)
-├── api/routers/
-│   ├── pages.py        # HTML page routes (index, dashboard, auth pages)
-│   ├── redirect.py     # URL creation, listing, and redirect endpoints
-│   └── security.py     # Auth: register, login, tokens, password reset
+├── api/
+│   ├── rate_limit.py   # Redis per-route rate limiting (user/IP identity)
+│   └── routers/
+│       ├── pages.py    # HTML page routes (index, dashboard, auth pages)
+│       ├── redirect.py # URL creation, listing, and redirect endpoints
+│       └── security.py # Auth: register, login, tokens, password reset
 ├── models/
 │   ├── database.py     # SQLAlchemy models + async session
 │   ├── cache.py        # LRU + Redis caching helpers

@@ -3,7 +3,7 @@ from time import time
 from typing import Awaitable, Callable
 from loguru import logger as log
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,13 +11,14 @@ from fastapi.staticfiles import StaticFiles
 from uvicorn.protocols.utils import get_path_with_query_string
 
 from app.config import Config
+from app.api.rate_limit import enforce_rate_limit
 from app.api.routers.security import auth_router
 from app.api.routers.redirect import redirect_router
 from app.api.routers.pages import pages_router
 from app.models.database import DatabaseClient
 from app.models.redis import RedisClient
 from app.smtp_client import SMTPClient
-from app.utils import error_response, friendly_validation_message
+from app.utils import error_response, friendly_validation_message, get_client_ip
 
 
 async def create_dependencies() -> None:
@@ -46,6 +47,7 @@ app = FastAPI(
     docs_url="/docs" if is_dev_environment else None,
     redoc_url="/redoc" if is_dev_environment else None,
     openapi_url="/openapi.json" if is_dev_environment else None,
+    dependencies=[Depends(enforce_rate_limit)] if not is_dev_environment else None,
 )
 app.mount(
     "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
@@ -93,9 +95,7 @@ async def requests_log_middleware(
     log_function(
         "{} request from {} on route '{}' HTTP/{} with status code {} took {} seconds to process",
         scope["method"],
-        http_request.headers.get(
-            "X-Real-IP", getattr(http_request.client, "host", "-")
-        ),
+        get_client_ip(http_request),
         get_path_with_query_string(scope),
         scope["http_version"],
         response.status_code,

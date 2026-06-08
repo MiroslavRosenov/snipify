@@ -66,6 +66,34 @@ def generate_random_id() -> str:
     return secrets.token_urlsafe(6)
 
 
+def get_client_ip(request: Request) -> str:
+    """Best-effort client IP, honoring the usual reverse-proxy headers.
+
+    The app sits behind a proxy, so ``request.client.host`` is the proxy, not
+    the caller. We therefore trust, in order of preference:
+
+    * ``X-Forwarded-For`` — a ``client, proxy1, proxy2`` chain whose left-most
+      entry is the original client as seen by the first proxy.
+    * ``X-Real-IP`` — a single address some proxies set instead.
+    * the direct socket peer (``request.client.host``) as a last resort.
+
+    Falls back to ``"-"`` when none are available (e.g. in tests). These
+    headers are client-spoofable, so the result is only as trustworthy as the
+    proxy that sets them — fine for rate-limiting/logging, not for authz.
+    """
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client = forwarded.split(",")[0].strip()
+        if client:
+            return client
+
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip and real_ip.strip():
+        return real_ip.strip()
+
+    return getattr(request.client, "host", "-") or "-"
+
+
 def format_redirect_url(request: Request, alias: str) -> str:
     return request.base_url._url + alias
 
